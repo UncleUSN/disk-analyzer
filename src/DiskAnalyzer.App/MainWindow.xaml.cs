@@ -31,6 +31,8 @@ public partial class MainWindow : Window
     private bool _syncingAge;
     private bool _syncingSize;
     private bool _updatingExtensions;
+    private string _filterText = string.Empty;
+    private string _selectedExtension = AllExtensions;
 
     public MainWindow()
     {
@@ -220,13 +222,15 @@ public partial class MainWindow : Window
         StatusText.Text = "Останавливаем сканирование… Уже найденные файлы останутся в таблице.";
     }
 
-    private async Task RunScanAsync()
+    internal async Task RunScanAsync()
     {
         if (!CommitAgeBox() || !CommitSizeBox())
             return;
 
+        // Поля окна принадлежат потоку UI. В фоновый поток уходят только обычные значения.
         var age = (int)AgeSlider.Value;
         var sizeMb = (int)SizeSlider.Value;
+        var rootPath = PathBox.Text.Trim();
         _rules = LoadRules();
 
         _scanCts?.Cancel();
@@ -236,6 +240,7 @@ public partial class MainWindow : Window
 
         _results.Clear();
         _extensionLabels.Clear();
+        _selectedExtension = AllExtensions;
         _updatingExtensions = true;
         ExtensionBox.Items.Clear();
         ExtensionBox.Items.Add(AllExtensions);
@@ -254,7 +259,7 @@ public partial class MainWindow : Window
         ScanResult result;
         try
         {
-            result = await Task.Run(() => scanner.ScanAsync(PathBox.Text.Trim(), criteria, rules, progress, token), token);
+            result = await Task.Run(() => scanner.ScanAsync(rootPath, criteria, rules, progress, token), token);
         }
         catch (OperationCanceledException)
         {
@@ -274,7 +279,15 @@ public partial class MainWindow : Window
 
     private void ApplyProgress(ScanProgress progress)
     {
-        if (!IsLoaded)
+        // Progress<T> обычно сам возвращает вызов в поток окна.
+        // Если контекста синхронизации нет, коллекция и текстовые поля всё равно обновляются здесь.
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.Invoke(() => ApplyProgress(progress));
+            return;
+        }
+
+        if (Dispatcher.HasShutdownStarted || !IsLoaded)
             return;
 
         if (progress.NewCandidates.Count > 0)
@@ -395,6 +408,7 @@ public partial class MainWindow : Window
 
     private void FilterBox_TextChanged(object sender, TextChangedEventArgs e)
     {
+        _filterText = FilterBox.Text.Trim();
         if (!_ready)
             return;
         _view.Refresh();
@@ -403,7 +417,10 @@ public partial class MainWindow : Window
 
     private void ExtensionBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_updatingExtensions || _view is null)
+        if (_updatingExtensions)
+            return;
+        _selectedExtension = ExtensionBox.SelectedItem as string ?? AllExtensions;
+        if (!_ready)
             return;
         _view.Refresh();
         UpdateTotals();
@@ -414,7 +431,7 @@ public partial class MainWindow : Window
         if (item is not FileCandidate file)
             return false;
 
-        var selected = ExtensionBox.SelectedItem as string ?? AllExtensions;
+        var selected = _selectedExtension;
         if (!selected.Equals(AllExtensions, StringComparison.Ordinal))
         {
             var label = file.Extension.Length == 0 ? NoExtension : file.Extension;
@@ -422,7 +439,7 @@ public partial class MainWindow : Window
                 return false;
         }
 
-        var text = FilterBox.Text.Trim();
+        var text = _filterText;
         if (text.Length == 0)
             return true;
 
