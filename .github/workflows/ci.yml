@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build, test, and publish
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build, test, and publish
+        shell: pwsh
+        run: ./scripts/build.ps1
+
+      - name: Upload DiskAnalyzer.exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: DiskAnalyzer-win-x64
+          path: |
+            artifacts/publish/DiskAnalyzer.exe
+            artifacts/publish/exclusions.json
+          if-no-files-found: error

@@ -1,0 +1,180 @@
+<Window x:Class="DiskAnalyzer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Анализатор диска"
+        Width="1180"
+        Height="760"
+        MinWidth="960"
+        MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource WindowBrush}"
+        FontFamily="Segoe UI"
+        FontSize="14"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        Loaded="Window_Loaded"
+        Closing="Window_Closing">
+  <Grid Margin="16">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <StackPanel Grid.Row="0" Margin="0,0,0,12">
+      <TextBlock Text="Анализатор диска" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" />
+      <TextBlock Margin="0,4,0,0"
+                 TextWrapping="Wrap"
+                 Foreground="{StaticResource MutedBrush}"
+                 Text="Ищет крупные файлы, которыми давно не пользовались. Ничего не удаляет и не изменяет — только читает имена, размеры и даты." />
+      <TextBlock Margin="0,6,0,0"
+                 TextWrapping="Wrap"
+                 Foreground="{StaticResource MutedBrush}"
+                 Text="Без прав администратора часть папок недоступна и будет пропущена. Запуск от имени администратора показывает больше файлов. Папки Program Files просматриваются, но программы (.exe, .dll и похожие) в список не попадают." />
+    </StackPanel>
+
+    <Border x:Name="NoticePanel"
+            Grid.Row="1"
+            Margin="0,0,0,12"
+            Padding="12,10"
+            Background="#FFF7E6"
+            BorderBrush="#F5C16C"
+            BorderThickness="1"
+            CornerRadius="8"
+            Visibility="Collapsed">
+      <TextBlock x:Name="NoticeText" TextWrapping="Wrap" Foreground="#7A4E00" />
+    </Border>
+
+    <Border Grid.Row="2" Margin="0,0,0,12" Padding="14" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="8">
+      <StackPanel>
+        <TextBlock Text="Параметры" FontWeight="SemiBold" FontSize="16" Foreground="{StaticResource InkBrush}" />
+        <TextBlock Margin="0,4,0,10"
+                   TextWrapping="Wrap"
+                   Foreground="{StaticResource MutedBrush}"
+                   Text="В список попадает файл, только если он старше указанного срока, не меньше указанного размера и не попал в исключения." />
+
+        <Grid Margin="0,0,0,8">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150" />
+            <ColumnDefinition Width="170" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock VerticalAlignment="Center" Text="Диск или папка" />
+          <ComboBox x:Name="DriveBox" Grid.Column="1" Margin="8,0" VerticalAlignment="Center" SelectionChanged="DriveBox_SelectionChanged" />
+          <TextBox x:Name="PathBox" Grid.Column="2" Margin="0,0,8,0" Padding="6,4" VerticalContentAlignment="Center" Text="C:\" KeyDown="PathBox_KeyDown" AllowDrop="True" PreviewDragOver="PathBox_PreviewDragOver" Drop="PathBox_Drop" ToolTip="Можно ввести путь или перетащить сюда папку" />
+          <Button x:Name="BrowseButton" Grid.Column="3" Content="Обзор…" Style="{StaticResource SecondaryButton}" Click="Browse_Click" />
+        </Grid>
+
+        <Grid Margin="0,0,0,8">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="230" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="80" />
+            <ColumnDefinition Width="60" />
+          </Grid.ColumnDefinitions>
+          <TextBlock VerticalAlignment="Center" Text="Не использовался больше" />
+          <Slider x:Name="AgeSlider" Grid.Column="1" Margin="8,0" Minimum="1" Maximum="3650" Value="365" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="AgeSlider_ValueChanged" />
+          <TextBox x:Name="AgeBox" Grid.Column="2" Margin="0,0,8,0" Padding="6,4" VerticalContentAlignment="Center" Text="365" LostFocus="AgeBox_LostFocus" KeyDown="AgeBox_KeyDown" />
+          <TextBlock Grid.Column="3" VerticalAlignment="Center" Text="дней" />
+        </Grid>
+
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="230" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="80" />
+            <ColumnDefinition Width="60" />
+          </Grid.ColumnDefinitions>
+          <TextBlock VerticalAlignment="Center" Text="Минимальный размер" />
+          <Slider x:Name="SizeSlider" Grid.Column="1" Margin="8,0" Minimum="1" Maximum="10240" Value="50" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="SizeSlider_ValueChanged" />
+          <TextBox x:Name="SizeBox" Grid.Column="2" Margin="0,0,8,0" Padding="6,4" VerticalContentAlignment="Center" Text="50" LostFocus="SizeBox_LostFocus" KeyDown="SizeBox_KeyDown" />
+          <TextBlock Grid.Column="3" VerticalAlignment="Center" Text="МБ" />
+        </Grid>
+        <TextBlock Margin="0,4,0,10" Foreground="{StaticResource MutedBrush}" Text="1 МБ = 1024 × 1024 байт. Срок считается как 24 часа, а не как календарный день." />
+
+        <StackPanel Orientation="Horizontal">
+          <Button x:Name="ScanButton" Content="Сканировать" Style="{StaticResource PrimaryButton}" Click="Scan_Click" ToolTip="Найти крупные старые файлы. Ничего не будет удалено." />
+          <Button x:Name="CancelButton" Margin="8,0,0,0" Content="Отмена" Style="{StaticResource SecondaryButton}" Click="Cancel_Click" IsEnabled="False" />
+          <Button x:Name="ExportButton" Margin="8,0,0,0" Content="Экспорт CSV" Style="{StaticResource SecondaryButton}" Click="Export_Click" IsEnabled="False" />
+          <Button x:Name="OpenButton" Margin="8,0,0,0" Content="Открыть папку" Style="{StaticResource SecondaryButton}" Click="Open_Click" IsEnabled="False" />
+        </StackPanel>
+        <ProgressBar x:Name="ScanProgress" Height="8" Margin="0,12,0,0" Visibility="Collapsed" />
+      </StackPanel>
+    </Border>
+
+    <Border Grid.Row="3" Padding="14,12,14,8" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="8">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="Результаты" FontWeight="SemiBold" FontSize="16" Foreground="{StaticResource InkBrush}" />
+        <Grid Grid.Row="1" Margin="0,8,0,8">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="220" />
+          </Grid.ColumnDefinitions>
+          <TextBlock VerticalAlignment="Center" Margin="0,0,8,0" Text="Фильтр" />
+          <TextBox x:Name="FilterBox" Grid.Column="1" Margin="0,0,12,0" Padding="6,4" VerticalContentAlignment="Center" ToolTip="Часть имени, папки или расширения" TextChanged="FilterBox_TextChanged" />
+          <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="0,0,8,0" Text="Расширение" />
+          <ComboBox x:Name="ExtensionBox" Grid.Column="3" VerticalAlignment="Center" SelectionChanged="ExtensionBox_SelectionChanged" />
+        </Grid>
+
+        <DataGrid x:Name="ResultsGrid"
+                  Grid.Row="2"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserSortColumns="True"
+                  CanUserResizeColumns="True"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
+                  GridLinesVisibility="Horizontal"
+                  HeadersVisibility="Column"
+                  RowBackground="White"
+                  AlternatingRowBackground="#F7F9FC"
+                  BorderBrush="{StaticResource LineBrush}"
+                  HorizontalGridLinesBrush="#E5E7EB"
+                  VerticalGridLinesBrush="Transparent"
+                  MouseDoubleClick="ResultsGrid_MouseDoubleClick"
+                  SelectionChanged="ResultsGrid_SelectionChanged">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Имя" Binding="{Binding Name}" Width="220" SortMemberPath="Name">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="ToolTip" Value="{Binding FullPath}" />
+                  <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+            <DataGridTextColumn Header="Папка" Binding="{Binding Directory}" Width="*" SortMemberPath="Directory">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="ToolTip" Value="{Binding Directory}" />
+                  <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+            <DataGridTextColumn Header="Размер" Binding="{Binding SizeText}" Width="110" SortMemberPath="SizeBytes" />
+            <DataGridTextColumn Header="Последнее использование" Binding="{Binding LastUsedText}" Width="200" SortMemberPath="LastUsedUtc" />
+            <DataGridTextColumn Header="Изменён" Binding="{Binding LastWriteText}" Width="150" SortMemberPath="LastWriteUtc" />
+            <DataGridTextColumn Header="Расширение" Binding="{Binding Extension}" Width="110" SortMemberPath="Extension" />
+          </DataGrid.Columns>
+        </DataGrid>
+      </Grid>
+    </Border>
+
+    <StackPanel Grid.Row="4" Margin="0,10,0,0">
+      <TextBlock x:Name="TotalsText" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" Text="Найдено: 0 файлов, общий размер 0 Б" />
+      <TextBlock x:Name="StatusText" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Text="Укажите диск или папку и нажмите «Сканировать». По умолчанию — диск C:\, старше 365 дней, от 50 МБ." />
+      <TextBlock x:Name="RulesPathText" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" />
+    </StackPanel>
+  </Grid>
+</Window>
