@@ -292,11 +292,10 @@ public partial class MainWindow : Window
 
         if (progress.NewCandidates.Count > 0)
         {
-            using (_view.DeferRefresh())
-            {
-                foreach (var candidate in progress.NewCandidates)
-                    _results.Add(candidate);
-            }
+            // DeferRefresh нельзя сочетать с Add в ObservableCollection:
+            // представление в этот момент не даёт менять текущую строку и бросает исключение.
+            foreach (var candidate in progress.NewCandidates)
+                _results.Add(candidate);
 
             AddExtensionLabels(progress.NewCandidates);
         }
