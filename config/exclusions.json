@@ -1,0 +1,34 @@
+{
+  "description": "Правила исключений Анализатора диска. Файл можно править: следующее сканирование подхватит изменения. Папки Program Files и Program Files (x86) специально не исключаются — в них показываются крупные старые файлы, которые не являются программами (кэш, логи, архивы, данные установщиков). Исполняемые файлы (.exe, .dll, .sys, .msi, .drv) и файлы с атрибутом «Системный» пропускаются везде, в том числе в Program Files. В этом файле допустимы комментарии // и запятая в конце списка.",
+  "excludedRootDirectories": [
+    "Windows",
+    "ProgramData",
+    "System Volume Information",
+    "$Recycle.Bin",
+    "$WinREAgent",
+    "Recovery",
+    "Boot",
+    "EFI",
+    "PerfLogs"
+  ],
+  "excludedRelativePaths": [
+    "AppData/Local/Programs",
+    "AppData/Local/Microsoft",
+    "AppData/Local/Packages"
+  ],
+  "excludedFileNames": [
+    "pagefile.sys",
+    "hiberfil.sys",
+    "swapfile.sys"
+  ],
+  "excludedFileNamePrefixes": [
+    "DumpStack"
+  ],
+  "excludedExtensions": [
+    ".exe",
+    ".dll",
+    ".sys",
+    ".msi",
+    ".drv"
+  ]
+}

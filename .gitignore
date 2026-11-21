@@ -1,0 +1,11 @@
+bin/
+obj/
+artifacts/
+TestResults/
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+Thumbs.db
+Desktop.ini

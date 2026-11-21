@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>DiskAnalyzer.Core</RootNamespace>
+    <AssemblyName>DiskAnalyzer.Core</AssemblyName>
+    <Description>Правила отбора и сканирование диска. Файлы не изменяются.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\config\exclusions.json">
+      <LogicalName>DiskAnalyzer.Core.exclusions.json</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>
